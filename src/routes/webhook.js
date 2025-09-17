@@ -295,16 +295,25 @@ function handleCustomerUpdated(customerData, eventId) {
 
 // SHOPLINE Application 事件處理 - 按照完整整合範例
 function handleApplicationInstall(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
   console.log('🚀 APPLICATION INSTALLED EVENT')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
   console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  
+  console.log('📋 Application Details:')
   console.log(`   Application ID: ${resource._id}`)
   console.log(`   Application Version: ${resource.application_version || 'N/A'}`)
   console.log(`   Installed By: ${resource.installed_by || 'N/A'}`)
   console.log(`   Authorized At: ${resource.authorized_at || 'N/A'}`)
+  console.log(`   Created At: ${resource.created_at || 'N/A'}`)
+  console.log(`   Updated At: ${resource.updated_at || 'N/A'}`)
   console.log(`   App Scripts Activated: ${resource.app_settings?.app_scripts_activated || 'N/A'}`)
-  console.log(`   Is Dev Store: ${webhookData.is_devstore || 'N/A'}`)
+  console.log(`   Authorized Grants Digest: ${resource.authorized_grants_digest || 'N/A'}`)
+  console.log(`   Requested Grants Digest: ${resource.requested_grants_digest || 'N/A'}`)
   
   // 按照官方文件：為商家設定基本設定（如果尚未設定）
   // 注意：需要處理重新授權的情況，通常每個商家只應該執行一次
@@ -315,16 +324,29 @@ function handleApplicationInstall(webhookData, eventId) {
   // 2. 如果沒有，則進行初始化設定
   // 3. 記錄安裝資訊到資料庫
   // 4. 發送歡迎郵件或通知
+  
+  // TODO: 根據 Integration Guide，建立 Storefront OAuth Application
+  console.log(`🔧 TODO: Create Storefront OAuth Application for merchant: ${merchant_id}`)
 }
 
 function handleApplicationUninstall(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
-  console.log(`❌ Application uninstalled from merchant: ${merchant_id}`)
-  console.log(`🆔 Application ID: ${resource._id}`)
-  console.log(`📱 Application Version: ${resource.application_version}`)
-  console.log(`⏰ Deleted at: ${resource.deleted_at}`)
-  console.log(`👤 Installed by: ${resource.installed_by}`)
+  console.log('❌ APPLICATION UNINSTALLED EVENT')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  
+  console.log('📋 Application Details:')
+  console.log(`   Application ID: ${resource._id}`)
+  console.log(`   Application Version: ${resource.application_version}`)
+  console.log(`   Deleted At: ${resource.deleted_at}`)
+  console.log(`   Installed By: ${resource.installed_by}`)
+  console.log(`   Created At: ${resource.created_at}`)
+  console.log(`   Updated At: ${resource.updated_at}`)
+  console.log(`   App Scripts Activated: ${resource.app_settings?.app_scripts_activated || 'N/A'}`)
   
   // 按照官方文件：為商家清理相關資料
   console.log(`🗑️ Cleaning up data for merchant: ${merchant_id}`)
@@ -334,18 +356,40 @@ function handleApplicationUninstall(webhookData, eventId) {
   // 2. 清理任何與該商家相關的資源
   // 3. 發送卸載確認郵件
   // 4. 記錄卸載資訊
+  
+  // TODO: 根據 Integration Guide，清理 Storefront OAuth Application
+  console.log(`🔧 TODO: Clean up Storefront OAuth Application for merchant: ${merchant_id}`)
 }
 
 // SHOPLINE Access Token 事件處理 - 按照完整整合範例
 function handleAccessTokenCreate(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
-  console.log(`🔑 Access token created for merchant: ${merchant_id}`)
-  console.log(`🆔 Token ID: ${resource._id}`)
-  console.log(`🔑 Access Token: ${resource.token ? 'Present' : 'Not provided'}`)
-  console.log(`📋 Scopes: ${resource.scopes}`)
-  console.log(`⏰ Expires at: ${resource.expires_at}`)
-  console.log(`👤 Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log('🔑 ACCESS TOKEN CREATED EVENT')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  
+  console.log('📋 Token Details:')
+  console.log(`   Token ID: ${resource._id}`)
+  console.log(`   Application ID: ${resource.application_id}`)
+  console.log(`   Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log(`   Performer ID: ${resource.resource_owner_id?.performer_id}`)
+  console.log(`   Scopes: ${resource.scopes}`)
+  console.log(`   Expires In: ${resource.expires_in} seconds`)
+  console.log(`   Expires At: ${resource.expires_at}`)
+  console.log(`   Created At: ${resource.created_at}`)
+  console.log(`   Updated At: ${resource.updated_at}`)
+  
+  // 顯示 token（前後各 20 字元，中間用 ... 代替）
+  if (resource.token) {
+    const tokenPreview = resource.token.length > 40 
+      ? `${resource.token.substring(0, 20)}...${resource.token.substring(resource.token.length - 20)}`
+      : resource.token
+    console.log(`   Token Preview: ${tokenPreview}`)
+  }
   
   // 按照官方文件：將 token 儲存到資料庫（僅在 ERP 模式開啟時可用）
   if (resource.token) {
@@ -360,13 +404,32 @@ function handleAccessTokenCreate(webhookData, eventId) {
 }
 
 function handleAccessTokenRevoke(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
-  console.log(`🚫 Access token revoked for merchant: ${merchant_id}`)
-  console.log(`🆔 Token ID: ${resource._id}`)
-  console.log(`⏰ Revoked at: ${resource.revoked_at}`)
-  console.log(`📋 Scopes: ${resource.scopes}`)
-  console.log(`👤 Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log('🚫 ACCESS TOKEN REVOKED EVENT')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  
+  console.log('📋 Token Details:')
+  console.log(`   Token ID: ${resource._id}`)
+  console.log(`   Application ID: ${resource.application_id}`)
+  console.log(`   Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log(`   Performer ID: ${resource.resource_owner_id?.performer_id}`)
+  console.log(`   Scopes: ${resource.scopes}`)
+  console.log(`   Created At: ${resource.created_at}`)
+  console.log(`   Updated At: ${resource.updated_at}`)
+  console.log(`   Revoked At: ${resource.revoked_at}`)
+  
+  // 顯示被撤銷的 token（前後各 20 字元，中間用 ... 代替）
+  if (resource.token) {
+    const tokenPreview = resource.token.length > 40 
+      ? `${resource.token.substring(0, 20)}...${resource.token.substring(resource.token.length - 20)}`
+      : resource.token
+    console.log(`   Revoked Token Preview: ${tokenPreview}`)
+  }
   
   // 按照官方文件：從資料庫中移除 token（可能收到多個 webhook，每個 token 一個）
   console.log(`🗑️ Removing access token from database for merchant: ${merchant_id}`)

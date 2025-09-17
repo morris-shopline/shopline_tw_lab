@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth')
 const webhookRoutes = require('./routes/webhook')
 const apiRoutes = require('./routes/api')
 const landingRoutes = require('./routes/landing')
+const storefrontOAuthRoutes = require('./routes/storefrontOAuth')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -47,6 +48,7 @@ app.use('/auth', authRoutes)
 app.use('/webhook', webhookRoutes)
 app.use('/api', apiRoutes)
 app.use('/landing', landingRoutes)
+app.use('/storefront-oauth', storefrontOAuthRoutes)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -103,8 +105,10 @@ app.get('/', (req, res) => {
                     <li>Webhook 事件處理</li>
                     <li>API 整合測試</li>
                     <li>商店資料存取</li>
+                    <li>Storefront OAuth (客戶端認證)</li>
                 </ul>
-                <a href="/auth/login" class="btn">開始認證</a>
+                <a href="/auth/login" class="btn">商家認證</a>
+                <a href="/storefront-oauth/authorize?merchant_id=5f0e8941c68746000897e1f7" class="btn">客戶端認證</a>
             </div>
             
             <div class="card">
