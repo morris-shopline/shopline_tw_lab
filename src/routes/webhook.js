@@ -85,6 +85,19 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
         handleCustomerUpdated(eventData, eventId)
         break
         
+      // SHOPLINE 特有的 Webhook 事件
+      case 'app_installation_token_create':
+        handleAppInstallation(eventData, eventId)
+        break
+        
+      case 'app_installation_token_revoke':
+        handleAppUninstallation(eventData, eventId)
+        break
+        
+      case 'webhook/verification':
+        handleWebhookVerification(eventData, eventId)
+        break
+        
       default:
         console.log(`🔔 Unhandled webhook event: ${eventType}`)
         handleGenericEvent(eventType, eventData, eventId)
@@ -170,6 +183,37 @@ function handleCustomerUpdated(customerData, eventId) {
   // 處理客戶更新邏輯
 }
 
+// SHOPLINE 特有的 Webhook 事件處理
+function handleAppInstallation(installationData, eventId) {
+  console.log(`🚀 App installed on shop: ${installationData.shop_domain || 'unknown'}`)
+  console.log(`🆔 Installation ID: ${installationData.id}`)
+  console.log(`🔑 Access Token: ${installationData.access_token ? 'Present' : 'Not provided'}`)
+  
+  // 在這裡處理應用程式安裝邏輯
+  // 例如：儲存 shop_domain 和 access_token 到資料庫
+  // 執行應用程式的初始化設定
+  // 發送歡迎郵件給商家等
+}
+
+function handleAppUninstallation(uninstallData, eventId) {
+  console.log(`❌ App uninstalled from shop: ${uninstallData.shop_domain || 'unknown'}`)
+  console.log(`🆔 Uninstall ID: ${uninstallData.id}`)
+  
+  // 在這裡處理應用程式卸載邏輯
+  // 例如：從資料庫中移除該商家的相關數據
+  // 清理任何與該商家相關的資源
+  // 發送卸載確認郵件等
+}
+
+function handleWebhookVerification(verificationData, eventId) {
+  console.log(`✅ Webhook verification received`)
+  console.log(`🔍 Verification data:`, JSON.stringify(verificationData, null, 2))
+  
+  // Webhook 驗證處理
+  // 通常不需要特殊處理，只需要回傳 200 狀態碼即可
+  // SHOPLINE 會自動驗證你的 endpoint 是否正常運作
+}
+
 // 通用事件處理
 function handleGenericEvent(eventType, eventData, eventId) {
   console.log(`🔔 Generic event handler for: ${eventType}`)
@@ -193,7 +237,10 @@ router.get('/test', (req, res) => {
       'products/update',
       'products/delete',
       'customers/create',
-      'customers/update'
+      'customers/update',
+      'app_installation_token_create',
+      'app_installation_token_revoke',
+      'webhook/verification'
     ],
     timestamp: new Date().toISOString()
   })
