@@ -139,8 +139,8 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
         break
         
       case 'webhook/verification':
-        const verificationResponse = handleWebhookVerification(eventData, eventId)
-        return res.status(200).json(verificationResponse)
+        const verificationToken = handleWebhookVerification(eventData, eventId)
+        return res.status(200).send(verificationToken)
         
       default:
         console.log(`🔔 Unhandled webhook event: ${eventType}`)
@@ -354,17 +354,14 @@ function handleWebhookVerification(verificationData, eventId) {
   console.log(`✅ Webhook verification received`)
   console.log(`🔍 Verification data:`, JSON.stringify(verificationData, null, 2))
   
-  // 根據 SHOPLINE 官方文件，webhook 驗證需要回傳驗證 token
+  // 根據 SHOPLINE 官方文件，webhook 驗證需要直接回傳驗證 token
   // 這個 token 會在開發者中心顯示，用於確認 webhook 端點正常運作
   const verificationToken = verificationData.token || 'NjY3ZDA5YWVhYjRjZmZm0TZhNjAxOGY3'
   
   console.log(`🔑 Returning verification token: ${verificationToken}`)
   
-  // 回傳驗證 token 給 SHOPLINE
-  return {
-    token: verificationToken,
-    message: 'Webhook verification successful'
-  }
+  // 直接回傳驗證 token 字串，不是物件
+  return verificationToken
 }
 
 // 通用事件處理
