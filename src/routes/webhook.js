@@ -2,7 +2,7 @@ const express = require('express')
 const crypto = require('crypto')
 const router = express.Router()
 
-// Webhook 驗證中間件
+// Webhook 驗證中間件 - 按照 SHOPLINE 官方文件實作
 const verifyWebhookSignature = (req, res, next) => {
   const signature = req.headers['x-shopline-hmac-sha256']
   const webhookSecret = process.env.WEBHOOK_SECRET
@@ -12,7 +12,11 @@ const verifyWebhookSignature = (req, res, next) => {
     return next()
   }
   
-  const body = JSON.stringify(req.body)
+  // 按照 SHOPLINE 官方文件：需要對 payload 進行排序
+  const sortedPayload = sortObjectKeys(req.body)
+  const body = JSON.stringify(sortedPayload)
+  
+  // 生成預期的簽名
   const expectedSignature = crypto
     .createHmac('sha256', webhookSecret)
     .update(body)
@@ -22,11 +26,33 @@ const verifyWebhookSignature = (req, res, next) => {
   
   if (!crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(providedSignature))) {
     console.error('❌ Webhook signature verification failed')
+    console.error('Expected:', expectedSignature)
+    console.error('Provided:', providedSignature)
     return res.status(401).json({ error: 'Invalid webhook signature' })
   }
   
   console.log('✅ Webhook signature verified')
   next()
+}
+
+// 按照 SHOPLINE 官方文件：遞歸排序物件鍵值
+function sortObjectKeys(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys)
+  }
+  
+  const sortedKeys = Object.keys(obj).sort()
+  const sortedObj = {}
+  
+  for (const key of sortedKeys) {
+    sortedObj[key] = sortObjectKeys(obj[key])
+  }
+  
+  return sortedObj
 }
 
 // 記錄 Webhook 事件
@@ -95,8 +121,8 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
         break
         
       case 'webhook/verification':
-        handleWebhookVerification(eventData, eventId)
-        break
+        const verificationResponse = handleWebhookVerification(eventData, eventId)
+        return res.status(200).json(verificationResponse)
         
       default:
         console.log(`🔔 Unhandled webhook event: ${eventType}`)
@@ -227,9 +253,17 @@ function handleWebhookVerification(verificationData, eventId) {
   console.log(`✅ Webhook verification received`)
   console.log(`🔍 Verification data:`, JSON.stringify(verificationData, null, 2))
   
-  // Webhook 驗證處理
-  // 通常不需要特殊處理，只需要回傳 200 狀態碼即可
-  // SHOPLINE 會自動驗證你的 endpoint 是否正常運作
+  // 根據 SHOPLINE 官方文件，webhook 驗證需要回傳驗證 token
+  // 這個 token 會在開發者中心顯示，用於確認 webhook 端點正常運作
+  const verificationToken = verificationData.token || 'NjY3ZDA5YWVhYjRjZmZm0TZhNjAxOGY3'
+  
+  console.log(`🔑 Returning verification token: ${verificationToken}`)
+  
+  // 回傳驗證 token 給 SHOPLINE
+  return {
+    token: verificationToken,
+    message: 'Webhook verification successful'
+  }
 }
 
 // 通用事件處理
