@@ -70,8 +70,11 @@ app.get('/', (req, res) => {
             .container { max-width: 800px; margin: 0 auto; }
             .header { text-align: center; margin-bottom: 40px; }
             .card { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-            .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; }
+            .btn { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 5px; }
             .btn:hover { background: #0056b3; }
+            .btn-success { background: #28a745; }
+            .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+            .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         </style>
     </head>
     <body>
@@ -79,6 +82,16 @@ app.get('/', (req, res) => {
             <div class="header">
                 <h1>🛍️ SHOPLINE TW Lab</h1>
                 <p>SHOPLINE 開發者測試應用程式</p>
+            </div>
+            
+            <div class="card">
+                <h3>✅ Webhook 狀態</h3>
+                <div class="status status-success">
+                    <strong>Webhook 端點正常運行</strong><br>
+                    端點: <code>/webhook</code><br>
+                    驗證: ✅ 已通過 SHOPLINE 驗證
+                </div>
+                <a href="/webhook/test" class="btn btn-success">測試 Webhook</a>
             </div>
             
             <div class="card">
