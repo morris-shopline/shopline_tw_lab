@@ -13,10 +13,6 @@ const verifyWebhookSignature = (req, res, next) => {
     return next()
   }
   
-  // 暫時跳過簽名驗證以便測試 webhook 驗證
-  console.warn('⚠️ Webhook signature verification temporarily disabled for testing')
-  return next()
-  
   try {
     // 按照 SHOPLINE 官方文件：需要對 payload 進行排序
     const sortedPayload = sortObjectKeys(req.body)
@@ -74,9 +70,19 @@ function sortObjectKeys(obj) {
 const logWebhookEvent = (req, res, next) => {
   const eventType = req.headers['x-shopline-topic'] || req.body.topic
   const eventId = req.headers['x-shopline-event-id']
+  const timestamp = req.headers['x-shopline-developer-event-timestamp']
+  const signature = req.query.sign
   
-  console.log(`📨 Webhook received: ${eventType} (${eventId})`)
-  console.log('📊 Event data:', JSON.stringify(req.body, null, 2))
+  console.log('='.repeat(60))
+  console.log(`📨 Webhook Event Received`)
+  console.log(`🕐 Time: ${new Date().toISOString()}`)
+  console.log(`📋 Event Type: ${eventType}`)
+  console.log(`🆔 Event ID: ${eventId || 'N/A'}`)
+  console.log(`⏰ Timestamp: ${timestamp || 'N/A'}`)
+  console.log(`🔐 Signature: ${signature ? 'Present' : 'Missing'}`)
+  console.log(`📊 Event Data:`)
+  console.log(JSON.stringify(req.body, null, 2))
+  console.log('='.repeat(60))
   
   next()
 }
@@ -188,64 +194,101 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
 
 // 訂單相關事件處理
 function handleOrderCreated(orderData, eventId) {
-  console.log(`🛒 New order created: ${orderData.id}`)
-  console.log(`💰 Order total: ${orderData.total_price}`)
-  console.log(`👤 Customer: ${orderData.customer?.email || 'Guest'}`)
+  console.log('🛒 ORDER CREATED EVENT')
+  console.log(`   Order ID: ${orderData.id}`)
+  console.log(`   Order Number: ${orderData.order_number || 'N/A'}`)
+  console.log(`   Total Price: ${orderData.total_price || 'N/A'}`)
+  console.log(`   Currency: ${orderData.currency || 'N/A'}`)
+  console.log(`   Customer: ${orderData.customer?.email || orderData.customer?.name || 'Guest'}`)
+  console.log(`   Customer ID: ${orderData.customer?.id || 'N/A'}`)
+  console.log(`   Financial Status: ${orderData.financial_status || 'N/A'}`)
+  console.log(`   Fulfillment Status: ${orderData.fulfillment_status || 'N/A'}`)
+  console.log(`   Created At: ${orderData.created_at || 'N/A'}`)
   
   // 在這裡添加你的業務邏輯
   // 例如：發送確認郵件、更新庫存、記錄到資料庫等
 }
 
 function handleOrderUpdated(orderData, eventId) {
-  console.log(`📝 Order updated: ${orderData.id}`)
-  console.log(`📊 New status: ${orderData.financial_status}`)
+  console.log('📝 ORDER UPDATED EVENT')
+  console.log(`   Order ID: ${orderData.id}`)
+  console.log(`   Financial Status: ${orderData.financial_status || 'N/A'}`)
+  console.log(`   Fulfillment Status: ${orderData.fulfillment_status || 'N/A'}`)
+  console.log(`   Updated At: ${orderData.updated_at || 'N/A'}`)
   
   // 處理訂單狀態變更
 }
 
 function handleOrderPaid(orderData, eventId) {
-  console.log(`💳 Order paid: ${orderData.id}`)
-  console.log(`💰 Payment amount: ${orderData.total_price}`)
+  console.log('💳 ORDER PAID EVENT')
+  console.log(`   Order ID: ${orderData.id}`)
+  console.log(`   Payment Amount: ${orderData.total_price || 'N/A'}`)
+  console.log(`   Currency: ${orderData.currency || 'N/A'}`)
+  console.log(`   Financial Status: ${orderData.financial_status || 'N/A'}`)
+  console.log(`   Paid At: ${orderData.updated_at || 'N/A'}`)
   
   // 處理付款完成邏輯
 }
 
 function handleOrderCancelled(orderData, eventId) {
-  console.log(`❌ Order cancelled: ${orderData.id}`)
+  console.log('❌ ORDER CANCELLED EVENT')
+  console.log(`   Order ID: ${orderData.id}`)
+  console.log(`   Financial Status: ${orderData.financial_status || 'N/A'}`)
+  console.log(`   Cancelled At: ${orderData.updated_at || 'N/A'}`)
   
   // 處理訂單取消邏輯
 }
 
 // 商品相關事件處理
 function handleProductCreated(productData, eventId) {
-  console.log(`🆕 New product created: ${productData.title}`)
-  console.log(`🏷️ Product ID: ${productData.id}`)
+  console.log('🆕 PRODUCT CREATED EVENT')
+  console.log(`   Product ID: ${productData.id}`)
+  console.log(`   Title: ${productData.title || 'N/A'}`)
+  console.log(`   Handle: ${productData.handle || 'N/A'}`)
+  console.log(`   Price: ${productData.price || 'N/A'}`)
+  console.log(`   Status: ${productData.status || 'N/A'}`)
+  console.log(`   Created At: ${productData.created_at || 'N/A'}`)
   
   // 處理新商品邏輯
 }
 
 function handleProductUpdated(productData, eventId) {
-  console.log(`📝 Product updated: ${productData.title}`)
+  console.log('📝 PRODUCT UPDATED EVENT')
+  console.log(`   Product ID: ${productData.id}`)
+  console.log(`   Title: ${productData.title || 'N/A'}`)
+  console.log(`   Status: ${productData.status || 'N/A'}`)
+  console.log(`   Updated At: ${productData.updated_at || 'N/A'}`)
   
   // 處理商品更新邏輯
 }
 
 function handleProductDeleted(productData, eventId) {
-  console.log(`🗑️ Product deleted: ${productData.id}`)
+  console.log('🗑️ PRODUCT DELETED EVENT')
+  console.log(`   Product ID: ${productData.id}`)
+  console.log(`   Title: ${productData.title || 'N/A'}`)
+  console.log(`   Deleted At: ${productData.updated_at || 'N/A'}`)
   
   // 處理商品刪除邏輯
 }
 
 // 客戶相關事件處理
 function handleCustomerCreated(customerData, eventId) {
-  console.log(`👤 New customer: ${customerData.email}`)
-  console.log(`🆔 Customer ID: ${customerData.id}`)
+  console.log('👤 CUSTOMER CREATED EVENT')
+  console.log(`   Customer ID: ${customerData.id}`)
+  console.log(`   Email: ${customerData.email || 'N/A'}`)
+  console.log(`   Name: ${customerData.name || 'N/A'}`)
+  console.log(`   Phone: ${customerData.phone || 'N/A'}`)
+  console.log(`   Created At: ${customerData.created_at || 'N/A'}`)
   
   // 處理新客戶邏輯
 }
 
 function handleCustomerUpdated(customerData, eventId) {
-  console.log(`📝 Customer updated: ${customerData.email}`)
+  console.log('📝 CUSTOMER UPDATED EVENT')
+  console.log(`   Customer ID: ${customerData.id}`)
+  console.log(`   Email: ${customerData.email || 'N/A'}`)
+  console.log(`   Name: ${customerData.name || 'N/A'}`)
+  console.log(`   Updated At: ${customerData.updated_at || 'N/A'}`)
   
   // 處理客戶更新邏輯
 }
@@ -254,12 +297,14 @@ function handleCustomerUpdated(customerData, eventId) {
 function handleApplicationInstall(webhookData, eventId) {
   const { merchant_id, resource } = webhookData
   
-  console.log(`🚀 Application installed on merchant: ${merchant_id}`)
-  console.log(`🆔 Application ID: ${resource._id}`)
-  console.log(`📱 Application Version: ${resource.application_version}`)
-  console.log(`👤 Installed by: ${resource.installed_by}`)
-  console.log(`⏰ Authorized at: ${resource.authorized_at}`)
-  console.log(`🔧 App Scripts Activated: ${resource.app_settings?.app_scripts_activated}`)
+  console.log('🚀 APPLICATION INSTALLED EVENT')
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Application ID: ${resource._id}`)
+  console.log(`   Application Version: ${resource.application_version || 'N/A'}`)
+  console.log(`   Installed By: ${resource.installed_by || 'N/A'}`)
+  console.log(`   Authorized At: ${resource.authorized_at || 'N/A'}`)
+  console.log(`   App Scripts Activated: ${resource.app_settings?.app_scripts_activated || 'N/A'}`)
+  console.log(`   Is Dev Store: ${webhookData.is_devstore || 'N/A'}`)
   
   // 按照官方文件：為商家設定基本設定（如果尚未設定）
   // 注意：需要處理重新授權的情況，通常每個商家只應該執行一次
