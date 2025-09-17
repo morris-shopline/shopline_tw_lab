@@ -78,7 +78,7 @@ const logWebhookEvent = (req, res, next) => {
 // 處理所有 Webhook 事件
 router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
   try {
-    const eventType = req.headers['x-shopline-topic']
+    const eventType = req.headers['x-shopline-topic'] || req.body.topic
     const eventId = req.headers['x-shopline-event-id']
     const eventData = req.body
     
