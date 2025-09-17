@@ -86,11 +86,11 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
         break
         
       // SHOPLINE 特有的 Webhook 事件
-      case 'app_installation_token_create':
+      case 'access_token/app_installation_token_create':
         handleAppInstallation(eventData, eventId)
         break
         
-      case 'app_installation_token_revoke':
+      case 'access_token/app_installation_token_revoke':
         handleAppUninstallation(eventData, eventId)
         break
         
@@ -184,25 +184,43 @@ function handleCustomerUpdated(customerData, eventId) {
 }
 
 // SHOPLINE 特有的 Webhook 事件處理
-function handleAppInstallation(installationData, eventId) {
-  console.log(`🚀 App installed on shop: ${installationData.shop_domain || 'unknown'}`)
-  console.log(`🆔 Installation ID: ${installationData.id}`)
-  console.log(`🔑 Access Token: ${installationData.access_token ? 'Present' : 'Not provided'}`)
+function handleAppInstallation(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`🚀 App installed on merchant: ${merchant_id}`)
+  console.log(`🆔 Token ID: ${resource._id}`)
+  console.log(`🔑 Access Token: ${resource.token ? 'Present' : 'Not provided'}`)
+  console.log(`📋 Scopes: ${resource.scopes}`)
+  console.log(`⏰ Expires at: ${resource.expires_at}`)
+  console.log(`🏪 Is Dev Store: ${webhookData.is_devstore}`)
   
   // 在這裡處理應用程式安裝邏輯
-  // 例如：儲存 shop_domain 和 access_token 到資料庫
+  // 例如：儲存 merchant_id 和 access_token 到資料庫
   // 執行應用程式的初始化設定
   // 發送歡迎郵件給商家等
+  
+  // 儲存 token 供後續 API 呼叫使用
+  if (resource.token) {
+    // 這裡可以將 token 儲存到資料庫
+    console.log(`💾 Token stored for merchant: ${merchant_id}`)
+  }
 }
 
-function handleAppUninstallation(uninstallData, eventId) {
-  console.log(`❌ App uninstalled from shop: ${uninstallData.shop_domain || 'unknown'}`)
-  console.log(`🆔 Uninstall ID: ${uninstallData.id}`)
+function handleAppUninstallation(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`❌ App uninstalled from merchant: ${merchant_id}`)
+  console.log(`🆔 Token ID: ${resource._id}`)
+  console.log(`⏰ Revoked at: ${resource.revoked_at}`)
+  console.log(`🏪 Is Dev Store: ${webhookData.is_devstore}`)
   
   // 在這裡處理應用程式卸載邏輯
   // 例如：從資料庫中移除該商家的相關數據
   // 清理任何與該商家相關的資源
   // 發送卸載確認郵件等
+  
+  // 清理儲存的 token
+  console.log(`🗑️ Token revoked for merchant: ${merchant_id}`)
 }
 
 function handleWebhookVerification(verificationData, eventId) {
@@ -238,8 +256,8 @@ router.get('/test', (req, res) => {
       'products/delete',
       'customers/create',
       'customers/update',
-      'app_installation_token_create',
-      'app_installation_token_revoke',
+      'access_token/app_installation_token_create',
+      'access_token/app_installation_token_revoke',
       'webhook/verification'
     ],
     timestamp: new Date().toISOString()
