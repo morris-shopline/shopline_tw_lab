@@ -16,7 +16,9 @@ const verifyWebhookSignature = (req, res, next) => {
   try {
     // 按照 SHOPLINE 官方文件：需要對 payload 進行排序
     const sortedPayload = sortObjectKeys(req.body)
-    const stringifyPayload = JSON.stringify(sortedPayload)
+    
+    // 嘗試不同的 JSON 序列化方式
+    let stringifyPayload = JSON.stringify(sortedPayload)
     
     // 按照官方文件：message = timestamp + ":" + stringifyPayload
     const message = timestamp ? `${timestamp}:${stringifyPayload}` : stringifyPayload
@@ -27,14 +29,53 @@ const verifyWebhookSignature = (req, res, next) => {
       .update(message)
       .digest('hex')
     
+    console.log('🔍 Signature verification details:')
+    console.log(`   Timestamp: ${timestamp}`)
+    console.log(`   Payload: ${stringifyPayload}`)
+    console.log(`   Message: ${message}`)
+    console.log(`   Expected: ${expectedSignature}`)
+    console.log(`   Provided: ${signature}`)
+    
     // 比較簽名
     if (!crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))) {
       console.error('❌ Webhook signature verification failed')
-      console.error('Expected:', expectedSignature)
-      console.error('Provided:', signature)
-      console.error('Message:', message)
-      console.error('Timestamp:', timestamp)
-      console.error('Payload:', stringifyPayload)
+      
+      // 嘗試不排序的 payload
+      const unsortedPayload = JSON.stringify(req.body)
+      const unsortedMessage = timestamp ? `${timestamp}:${unsortedPayload}` : unsortedPayload
+      const unsortedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(unsortedMessage)
+        .digest('hex')
+      
+      console.log('🔄 Trying without sorting:')
+      console.log(`   Unsorted Payload: ${unsortedPayload}`)
+      console.log(`   Unsorted Message: ${unsortedMessage}`)
+      console.log(`   Unsorted Signature: ${unsortedSignature}`)
+      
+      if (crypto.timingSafeEqual(Buffer.from(unsortedSignature), Buffer.from(signature))) {
+        console.log('✅ Signature verified without sorting!')
+        return next()
+      }
+      
+      // 嘗試不同的 JSON 序列化方式
+      const compactPayload = JSON.stringify(sortedPayload, null, 0)
+      const compactMessage = timestamp ? `${timestamp}:${compactPayload}` : compactPayload
+      const compactSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(compactMessage)
+        .digest('hex')
+      
+      console.log('🔄 Trying compact JSON:')
+      console.log(`   Compact Payload: ${compactPayload}`)
+      console.log(`   Compact Message: ${compactMessage}`)
+      console.log(`   Compact Signature: ${compactSignature}`)
+      
+      if (crypto.timingSafeEqual(Buffer.from(compactSignature), Buffer.from(signature))) {
+        console.log('✅ Signature verified with compact JSON!')
+        return next()
+      }
+      
       return res.status(401).json({ error: 'Invalid webhook signature' })
     }
     
