@@ -111,7 +111,25 @@ router.post('/', verifyWebhookSignature, logWebhookEvent, (req, res) => {
         handleCustomerUpdated(eventData, eventId)
         break
         
-      // SHOPLINE 特有的 Webhook 事件
+      // SHOPLINE Application 事件 - 按照完整整合範例
+      case 'application/install':
+        handleApplicationInstall(eventData, eventId)
+        break
+        
+      case 'application/uninstall':
+        handleApplicationUninstall(eventData, eventId)
+        break
+        
+      // SHOPLINE Access Token 事件 - 按照完整整合範例
+      case 'access_token/create':
+        handleAccessTokenCreate(eventData, eventId)
+        break
+        
+      case 'access_token/revoke':
+        handleAccessTokenRevoke(eventData, eventId)
+        break
+        
+      // SHOPLINE App Installation Token 事件 (舊版)
       case 'access_token/app_installation_token_create':
         handleAppInstallation(eventData, eventId)
         break
@@ -209,7 +227,90 @@ function handleCustomerUpdated(customerData, eventId) {
   // 處理客戶更新邏輯
 }
 
-// SHOPLINE 特有的 Webhook 事件處理
+// SHOPLINE Application 事件處理 - 按照完整整合範例
+function handleApplicationInstall(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`🚀 Application installed on merchant: ${merchant_id}`)
+  console.log(`🆔 Application ID: ${resource._id}`)
+  console.log(`📱 Application Version: ${resource.application_version}`)
+  console.log(`👤 Installed by: ${resource.installed_by}`)
+  console.log(`⏰ Authorized at: ${resource.authorized_at}`)
+  console.log(`🔧 App Scripts Activated: ${resource.app_settings?.app_scripts_activated}`)
+  
+  // 按照官方文件：為商家設定基本設定（如果尚未設定）
+  // 注意：需要處理重新授權的情況，通常每個商家只應該執行一次
+  console.log(`💾 Setting up basic settings for merchant: ${merchant_id}`)
+  
+  // 在這裡處理應用程式安裝邏輯：
+  // 1. 檢查商家是否已經有基本設定
+  // 2. 如果沒有，則進行初始化設定
+  // 3. 記錄安裝資訊到資料庫
+  // 4. 發送歡迎郵件或通知
+}
+
+function handleApplicationUninstall(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`❌ Application uninstalled from merchant: ${merchant_id}`)
+  console.log(`🆔 Application ID: ${resource._id}`)
+  console.log(`📱 Application Version: ${resource.application_version}`)
+  console.log(`⏰ Deleted at: ${resource.deleted_at}`)
+  console.log(`👤 Installed by: ${resource.installed_by}`)
+  
+  // 按照官方文件：為商家清理相關資料
+  console.log(`🗑️ Cleaning up data for merchant: ${merchant_id}`)
+  
+  // 在這裡處理應用程式卸載邏輯：
+  // 1. 從資料庫中移除該商家的相關數據
+  // 2. 清理任何與該商家相關的資源
+  // 3. 發送卸載確認郵件
+  // 4. 記錄卸載資訊
+}
+
+// SHOPLINE Access Token 事件處理 - 按照完整整合範例
+function handleAccessTokenCreate(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`🔑 Access token created for merchant: ${merchant_id}`)
+  console.log(`🆔 Token ID: ${resource._id}`)
+  console.log(`🔑 Access Token: ${resource.token ? 'Present' : 'Not provided'}`)
+  console.log(`📋 Scopes: ${resource.scopes}`)
+  console.log(`⏰ Expires at: ${resource.expires_at}`)
+  console.log(`👤 Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  
+  // 按照官方文件：將 token 儲存到資料庫（僅在 ERP 模式開啟時可用）
+  if (resource.token) {
+    console.log(`💾 Storing access token for merchant: ${merchant_id}`)
+    
+    // 在這裡處理 access token 儲存邏輯：
+    // 1. 將 token 和相關資訊儲存到資料庫
+    // 2. 建立與商家的關聯
+    // 3. 準備進行背景 API 呼叫
+    // 4. 記錄 token 建立時間和範圍
+  }
+}
+
+function handleAccessTokenRevoke(webhookData, eventId) {
+  const { merchant_id, resource } = webhookData
+  
+  console.log(`🚫 Access token revoked for merchant: ${merchant_id}`)
+  console.log(`🆔 Token ID: ${resource._id}`)
+  console.log(`⏰ Revoked at: ${resource.revoked_at}`)
+  console.log(`📋 Scopes: ${resource.scopes}`)
+  console.log(`👤 Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  
+  // 按照官方文件：從資料庫中移除 token（可能收到多個 webhook，每個 token 一個）
+  console.log(`🗑️ Removing access token from database for merchant: ${merchant_id}`)
+  
+  // 在這裡處理 access token 撤銷邏輯：
+  // 1. 從資料庫中移除該 token
+  // 2. 清理與該 token 相關的會話或快取
+  // 3. 記錄撤銷時間和原因
+  // 4. 通知相關服務停止使用該 token
+}
+
+// SHOPLINE 特有的 Webhook 事件處理 (舊版 App Installation Token)
 function handleAppInstallation(webhookData, eventId) {
   const { merchant_id, resource } = webhookData
   
@@ -281,17 +382,34 @@ router.get('/test', (req, res) => {
     message: 'Webhook endpoint is ready',
     webhook_url: `${process.env.APP_URL || 'http://localhost:3000'}/webhook`,
     supported_events: [
+      // 訂單相關事件
       'orders/create',
       'orders/update', 
       'orders/paid',
       'orders/cancelled',
+      
+      // 商品相關事件
       'products/create',
       'products/update',
       'products/delete',
+      
+      // 客戶相關事件
       'customers/create',
       'customers/update',
+      
+      // SHOPLINE Application 事件 (完整整合範例)
+      'application/install',
+      'application/uninstall',
+      
+      // SHOPLINE Access Token 事件 (完整整合範例)
+      'access_token/create',
+      'access_token/revoke',
+      
+      // SHOPLINE App Installation Token 事件 (舊版)
       'access_token/app_installation_token_create',
       'access_token/app_installation_token_revoke',
+      
+      // Webhook 驗證事件
       'webhook/verification'
     ],
     timestamp: new Date().toISOString()

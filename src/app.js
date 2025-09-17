@@ -9,6 +9,7 @@ require('dotenv').config()
 const authRoutes = require('./routes/auth')
 const webhookRoutes = require('./routes/webhook')
 const apiRoutes = require('./routes/api')
+const landingRoutes = require('./routes/landing')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -44,6 +45,7 @@ app.use(express.static('public'))
 app.use('/auth', authRoutes)
 app.use('/webhook', webhookRoutes)
 app.use('/api', apiRoutes)
+app.use('/landing', landingRoutes)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
