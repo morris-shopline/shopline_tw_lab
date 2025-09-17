@@ -380,41 +380,81 @@ function handleAccessTokenRevoke(webhookData, eventId) {
 
 // SHOPLINE 特有的 Webhook 事件處理 (舊版 App Installation Token)
 function handleAppInstallation(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
-  console.log(`🚀 App installed on merchant: ${merchant_id}`)
-  console.log(`🆔 Token ID: ${resource._id}`)
-  console.log(`🔑 Access Token: ${resource.token ? 'Present' : 'Not provided'}`)
-  console.log(`📋 Scopes: ${resource.scopes}`)
-  console.log(`⏰ Expires at: ${resource.expires_at}`)
-  console.log(`🏪 Is Dev Store: ${webhookData.is_devstore}`)
+  console.log('🚀 APP INSTALLATION TOKEN CREATED')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  console.log(`   Is Dev Store: ${webhookData.is_devstore}`)
+  
+  console.log('📋 Token Details:')
+  console.log(`   Token ID: ${resource._id}`)
+  console.log(`   Application ID: ${resource.application_id}`)
+  console.log(`   Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log(`   Performer ID: ${resource.resource_owner_id?.performer_id}`)
+  console.log(`   Scopes: ${resource.scopes}`)
+  console.log(`   Expires In: ${resource.expires_in} seconds`)
+  console.log(`   Expires At: ${resource.expires_at}`)
+  console.log(`   Created At: ${resource.created_at}`)
+  console.log(`   Updated At: ${resource.updated_at}`)
+  console.log(`   Version Type: ${resource.version_type}`)
+  console.log(`   Is App Installation Token: ${resource.is_app_installation_token}`)
+  
+  // 顯示 token（前後各 20 字元，中間用 ... 代替）
+  if (resource.token) {
+    const tokenPreview = resource.token.length > 40 
+      ? `${resource.token.substring(0, 20)}...${resource.token.substring(resource.token.length - 20)}`
+      : resource.token
+    console.log(`   Token Preview: ${tokenPreview}`)
+  }
   
   // 在這裡處理應用程式安裝邏輯
   // 例如：儲存 merchant_id 和 access_token 到資料庫
   // 執行應用程式的初始化設定
   // 發送歡迎郵件給商家等
   
-  // 儲存 token 供後續 API 呼叫使用
-  if (resource.token) {
-    // 這裡可以將 token 儲存到資料庫
-    console.log(`💾 Token stored for merchant: ${merchant_id}`)
-  }
+  console.log(`💾 Token stored for merchant: ${merchant_id}`)
 }
 
 function handleAppUninstallation(webhookData, eventId) {
-  const { merchant_id, resource } = webhookData
+  const { merchant_id, resource, event, topic, trace_id, ts } = webhookData
   
-  console.log(`❌ App uninstalled from merchant: ${merchant_id}`)
-  console.log(`🆔 Token ID: ${resource._id}`)
-  console.log(`⏰ Revoked at: ${resource.revoked_at}`)
-  console.log(`🏪 Is Dev Store: ${webhookData.is_devstore}`)
+  console.log('❌ APP INSTALLATION TOKEN REVOKED')
+  console.log(`   Event: ${event}`)
+  console.log(`   Topic: ${topic}`)
+  console.log(`   Merchant ID: ${merchant_id}`)
+  console.log(`   Trace ID: ${trace_id}`)
+  console.log(`   Timestamp: ${ts}`)
+  console.log(`   Is Dev Store: ${webhookData.is_devstore}`)
+  
+  console.log('📋 Token Details:')
+  console.log(`   Token ID: ${resource._id}`)
+  console.log(`   Application ID: ${resource.application_id}`)
+  console.log(`   Resource Owner ID: ${resource.resource_owner_id?.id}`)
+  console.log(`   Performer ID: ${resource.resource_owner_id?.performer_id}`)
+  console.log(`   Scopes: ${resource.scopes}`)
+  console.log(`   Created At: ${resource.created_at}`)
+  console.log(`   Updated At: ${resource.updated_at}`)
+  console.log(`   Revoked At: ${resource.revoked_at}`)
+  console.log(`   Version Type: ${resource.version_type}`)
+  console.log(`   Is App Installation Token: ${resource.is_app_installation_token}`)
+  
+  // 顯示被撤銷的 token（前後各 20 字元，中間用 ... 代替）
+  if (resource.token) {
+    const tokenPreview = resource.token.length > 40 
+      ? `${resource.token.substring(0, 20)}...${resource.token.substring(resource.token.length - 20)}`
+      : resource.token
+    console.log(`   Revoked Token Preview: ${tokenPreview}`)
+  }
   
   // 在這裡處理應用程式卸載邏輯
   // 例如：從資料庫中移除該商家的相關數據
   // 清理任何與該商家相關的資源
   // 發送卸載確認郵件等
   
-  // 清理儲存的 token
   console.log(`🗑️ Token revoked for merchant: ${merchant_id}`)
 }
 
