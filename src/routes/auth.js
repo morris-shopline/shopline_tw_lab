@@ -42,6 +42,12 @@ router.get('/callback', async (req, res) => {
   try {
     const { code, state, error } = req.query
     
+    console.log('🔍 OAuth callback received:')
+    console.log('   Code:', code ? 'Present' : 'Missing')
+    console.log('   State:', state || 'Missing')
+    console.log('   Session State:', req.session.oauthState || 'Missing')
+    console.log('   Error:', error || 'None')
+    
     // 檢查是否有錯誤
     if (error) {
       console.error('❌ OAuth error:', error)
@@ -51,7 +57,17 @@ router.get('/callback', async (req, res) => {
     // 驗證 state 參數
     if (!state || state !== req.session.oauthState) {
       console.error('❌ Invalid state parameter')
-      return res.status(400).json({ error: 'Invalid state parameter' })
+      console.error('   Expected:', req.session.oauthState)
+      console.error('   Received:', state)
+      console.error('   Session ID:', req.sessionID)
+      return res.status(400).json({ 
+        error: 'Invalid state parameter',
+        details: {
+          expected: req.session.oauthState,
+          received: state,
+          sessionId: req.sessionID
+        }
+      })
     }
     
     // 清除 session 中的 state

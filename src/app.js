@@ -30,11 +30,12 @@ app.use(cookieParser())
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // 改為 true 確保 session 被建立
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // 暫時設為 false 以便除錯
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // 增加 sameSite 設定
   }
 }))
 
