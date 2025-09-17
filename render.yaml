@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: shopline-tw-lab
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SHOPLINE_CLIENT_ID
+        sync: false
+      - key: SHOPLINE_CLIENT_SECRET
+        sync: false
+      - key: SHOPLINE_REDIRECT_URI
+        sync: false
+      - key: SHOPLINE_SCOPE
+        value: read_products,write_products,read_orders,write_orders,read_customers
+      - key: WEBHOOK_SECRET
+        generateValue: true
